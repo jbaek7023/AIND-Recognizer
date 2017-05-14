@@ -77,7 +77,24 @@ class SelectorBIC(ModelSelector):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # TODO implement model selection based on BIC scores
-        raise NotImplementedError
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        bic_scores = []
+        try:
+            for n in self.n_components:
+                # BIC = −2 log L + p log N
+                # L = is the likelihood of the fitted model
+                # p = is the number of parameters
+                # N = is the number of data points
+                model = self.base_model(n)
+                log_l = model.score(self.X, self.lengths)
+                p = n ** 2 + 2 * n * model.n_features - 1
+                bic_score = -2 * log_l + p * math.log(n)
+                bic_scores.append(bic_score)
+        except Exception as e:
+            pass
+
+        states = self.n_components[np.argmax(bic_scores)] if bic_scores else self.n_constant
+        return self.base_model(states)
 
 
 class SelectorDIC(ModelSelector):
@@ -95,6 +112,7 @@ class SelectorDIC(ModelSelector):
         # TODO implement model selection based on DIC scores
         raise NotImplementedError
 
+from sklearn.model_selection import KFold
 
 class SelectorCV(ModelSelector):
     ''' select best model based on average log Likelihood of cross-validation folds
@@ -103,6 +121,20 @@ class SelectorCV(ModelSelector):
 
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
+        mean_scores = []
+        split_method = KFold()
+        try:
+            n_components = range(self.min_n_components, self.max_n_components + 1)
+            for n_component in n_components:
+                model = self.base_model(n_component)
+                fold_scores = []
+                for _, test_idx in split_method.split(self.sequences):
+                    test_X, test_length = combine_sequences(test_idx, self.sequences)
+                    fold_scores.append(model.score(test_X, test_length))
+                mean_scores.append(np.mean(fold_scores))
+        except Exception as e:
+            pass
 
-        # TODO implement model selection using CV
-        raise NotImplementedError
+        states = n_components[np.argmax(mean_scores)] if mean_scores else self.n_constant
+        return None
+        # return states
