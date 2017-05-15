@@ -74,26 +74,26 @@ class SelectorBIC(ModelSelector):
 
         :return: GaussianHMM object
         """
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
-
         # TODO implement model selection based on BIC scores
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         bic_scores = []
         try:
-            for n in self.n_components:
-                # BIC = −2 log L + p log N
-                # L = is the likelihood of the fitted model
-                # p = is the number of parameters
-                # N = is the number of data points
+            n_components = range(self.min_n_components, self.max_n_components + 1)
+            for n in n_components:
+                # Bayesian Information Crieteria: −2 log L + p log N
+                # L : the likelihood of the fitted model
+                # p : the number of parameters
+                # N : the number of data points
+                # Reference: http://www2.imm.dtu.dk/courses/02433/doc/ch6_slides.pdf (from mentor)
                 model = self.base_model(n)
                 log_l = model.score(self.X, self.lengths)
-                p = n ** 2 + 2 * n * model.n_features - 1
+                p = n * (n-1) + 2 * n * model.n_features
                 bic_score = -2 * log_l + p * math.log(n)
                 bic_scores.append(bic_score)
         except Exception as e:
             pass
 
-        states = self.n_components[np.argmax(bic_scores)] if bic_scores else self.n_constant
+        states = n_components[np.argmax(bic_scores)] if bic_scores else self.n_constant
         return self.base_model(states)
 
 
@@ -110,7 +110,27 @@ class SelectorDIC(ModelSelector):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # TODO implement model selection based on DIC scores
-        raise NotImplementedError
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        dc_scores = []
+        try:
+            n_components = range(self.min_n_components, self.max_n_components + 1)
+            for n in n_components:
+                # Bayesian Information Crieteria: −2 log L + p log N
+                # L : the likelihood of the fitted model
+                # p : the number of parameters
+                # N : the number of data points
+                # Reference: http://www2.imm.dtu.dk/courses/02433/doc/ch6_slides.pdf (from mentor)
+                model = self.base_model(n)
+                log_l = model.score(self.X, self.lengths)
+                p = n * (n-1) + 2 * n * model.n_features
+                dc_score = -2 * log_l + p * math.log(n)
+                dc_scores.append(dc_score)
+        except Exception as e:
+            pass
+
+        states = n_components[np.argmax(dc_scores)] if bic_scores else self.n_constant
+        return self.base_model(states)
+
 
 from sklearn.model_selection import KFold
 
@@ -136,5 +156,5 @@ class SelectorCV(ModelSelector):
             pass
 
         states = n_components[np.argmax(mean_scores)] if mean_scores else self.n_constant
-        return None
-        # return states
+
+        return self.base_model(states)
