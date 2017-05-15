@@ -93,7 +93,7 @@ class SelectorBIC(ModelSelector):
         except Exception as e:
             pass
 
-        states = n_components[np.argmax(bic_scores)] if bic_scores else self.n_constant
+        states = n_components[np.argmin(bic_scores)] if bic_scores else self.n_constant
         return self.base_model(states)
 
 
@@ -111,7 +111,7 @@ class SelectorDIC(ModelSelector):
 
         # TODO implement model selection based on DIC scores
         warnings.filterwarnings("ignore", category=DeprecationWarning)
-        dc_scores = []
+        dic_scores = []
         try:
             n_components = range(self.min_n_components, self.max_n_components + 1)
             for n in n_components:
@@ -123,12 +123,12 @@ class SelectorDIC(ModelSelector):
                 model = self.base_model(n)
                 log_l = model.score(self.X, self.lengths)
                 p = n * (n-1) + 2 * n * model.n_features
-                dc_score = -2 * log_l + p * math.log(n)
-                dc_scores.append(dc_score)
+                dic_score = -2 * log_l + p * math.log(n)
+                dic_scores.append(dic_score)
         except Exception as e:
             pass
 
-        states = n_components[np.argmax(dc_scores)] if bic_scores else self.n_constant
+        states = n_components[np.argmin(dic_scores)] if bic_scores else self.n_constant
         return self.base_model(states)
 
 
@@ -155,6 +155,6 @@ class SelectorCV(ModelSelector):
         except Exception as e:
             pass
 
-        states = n_components[np.argmax(mean_scores)] if mean_scores else self.n_constant
+        states = n_components[np.argmin(mean_scores)] if mean_scores else self.n_constant
 
         return self.base_model(states)
