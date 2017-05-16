@@ -92,7 +92,7 @@ class SelectorBIC(ModelSelector):
         except Exception as e:
             pass
 
-        states = n_components[np.argmax(bic_scores)] if bic_scores else self.n_constant
+        states = n_components[np.argmin(bic_scores)] if bic_scores else self.n_constant
         return self.base_model(states)
 
 
@@ -114,9 +114,8 @@ class SelectorDIC(ModelSelector):
             n_components = range(self.min_n_components, self.max_n_components + 1)
             log_p_list = []
             for n_component in n_components:
-                # Discriminative Information Criterion: logP - alpha/(M-1)*SUM(logP_2)
-                # logP :difference between likelihood of the data
-                # -alpha/(M-1)*SUM(logP_2) : the avg of the anti-likelihood of the data
+                # log(P(X(i)) :difference between likelihood of the data
+                # - 1/(M-1)SUM(log(P(X(all but i)) : the avg of the anti-likelihood of the data
                 # M : likelihood component length
                 # alpha : parameter
                 

@@ -33,7 +33,7 @@ def recognize(models: dict, test_set: SinglesData):
             try:
                 word_score = model.score(X, lengths)
                 log_l[word] = word_score
-
+                # If the word score is higher than current max score
                 if word_score > max_score:
                     max_score = word_score
                     best_guess = word
