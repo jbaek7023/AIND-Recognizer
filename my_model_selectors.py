@@ -92,7 +92,7 @@ class SelectorBIC(ModelSelector):
         except Exception as e:
             pass
 
-        states = n_components[np.argmin(bic_scores)] if bic_scores else self.n_constant
+        states = n_components[np.argmax(bic_scores)] if bic_scores else self.n_constant
         return self.base_model(states)
 
 
@@ -132,7 +132,7 @@ class SelectorDIC(ModelSelector):
         except Exception as e:
             pass
 
-        states = n_components[np.argmin(dic_scores)] if dic_scores else self.n_constant
+        states = n_components[np.argmax(dic_scores)] if dic_scores else self.n_constant
         return self.base_model(states)
 
 
@@ -158,6 +158,6 @@ class SelectorCV(ModelSelector):
         except Exception as e:
             pass
 
-        states = n_components[np.argmin(mean_scores)] if mean_scores else self.n_constant
+        states = n_components[np.argmax(mean_scores)] if mean_scores else self.n_constant
 
         return self.base_model(states)
