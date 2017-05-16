@@ -7,7 +7,6 @@ from hmmlearn.hmm import GaussianHMM
 from sklearn.model_selection import KFold
 from asl_utils import combine_sequences
 
-
 class ModelSelector(object):
     '''
     base class for model selection (strategy design pattern)
@@ -79,16 +78,16 @@ class SelectorBIC(ModelSelector):
         bic_scores = []
         try:
             n_components = range(self.min_n_components, self.max_n_components + 1)
-            for n in n_components:
+            for n_component in n_components:
                 # Bayesian Information Crieteria: −2 log L + p log N
                 # L : the likelihood of the fitted model
                 # p : the number of parameters
                 # N : the number of data points
                 # Reference: http://www2.imm.dtu.dk/courses/02433/doc/ch6_slides.pdf (from mentor)
-                model = self.base_model(n)
+                model = self.base_model(n_component)
                 log_l = model.score(self.X, self.lengths)
-                p = n * (n-1) + 2 * n * model.n_features
-                bic_score = -2 * log_l + p * math.log(n)
+                p = n_component * (n_component-1) + 2 * n_component * model.n_features
+                bic_score = -2 * log_l + p * math.log(n_component)
                 bic_scores.append(bic_score)
         except Exception as e:
             pass
@@ -110,29 +109,33 @@ class SelectorDIC(ModelSelector):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # TODO implement model selection based on DIC scores
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
         dic_scores = []
         try:
             n_components = range(self.min_n_components, self.max_n_components + 1)
-            for n in n_components:
-                # Bayesian Information Crieteria: −2 log L + p log N
-                # L : the likelihood of the fitted model
-                # p : the number of parameters
-                # N : the number of data points
-                # Reference: http://www2.imm.dtu.dk/courses/02433/doc/ch6_slides.pdf (from mentor)
-                model = self.base_model(n)
-                log_l = model.score(self.X, self.lengths)
-                p = n * (n-1) + 2 * n * model.n_features
-                dic_score = -2 * log_l + p * math.log(n)
+            log_p_list = []
+            for n_component in n_components:
+                # Discriminative Information Criterion: logP - alpha/(M-1)*SUM(logP_2)
+                # logP :difference between likelihood of the data
+                # -alpha/(M-1)*SUM(logP_2) : the avg of the anti-likelihood of the data
+                # M : likelihood component length
+                # alpha : parameter
+                
+                model = self.base_model(n_component)
+                log_p_list.append(model.score(self.X, self.lengths))
+            
+            sum_log_p = sum(log_p_list)
+            m = len(n_components)
+            for log_p in log_p_list:
+                avg_of_anti_p = - (sum_log_p - log_p) / (m - 1)
+                dic_score = log_p + avg_of_anti_p
                 dic_scores.append(dic_score)
         except Exception as e:
             pass
 
-        states = n_components[np.argmin(dic_scores)] if bic_scores else self.n_constant
+        states = n_components[np.argmin(dic_scores)] if dic_scores else self.n_constant
         return self.base_model(states)
 
 
-from sklearn.model_selection import KFold
 
 class SelectorCV(ModelSelector):
     ''' select best model based on average log Likelihood of cross-validation folds
